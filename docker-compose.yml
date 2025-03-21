@@ -1,0 +1,40 @@
+networks:
+  device-network:
+    name: ${NETWORK_NAME}
+    driver: bridge
+
+services:
+  mysql:
+    hostname: ${MYSQL_HOST_NAME}
+    image: ${MYSQL_IMAGE} #mysql:8.4.0-oraclelinux8
+    container_name: ${MYSQL_HOST_NAME}
+    command: ${MYSQL_COMMAND}
+    restart: always
+    ports:
+      - ${MYSQL_PORT}
+    environment:
+      MYSQL_ROOT_USERNAME: ${MYSQL_USER_ROOT}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD_ROOT}
+      MYSQL_ROOT_DATABASE: ${MYSQL_DATABASE}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./data/db/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ${NETWORK_NAME}
+
+  server:
+    build: ./
+    container_name: device_scalable_backend
+    volumes:
+      - ./:/app/golang
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    environment:
+      MYSQL_HOST: mysql
+    depends_on:
+      - mysql
+    networks:
+      - ${NETWORK_NAME}
+
+volumes:
+  mysql_data: {}
